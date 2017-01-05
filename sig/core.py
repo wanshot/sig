@@ -11,14 +11,18 @@ from terminalsize import get_terminal_size
 
 class SIG(object):
 
-    def __init__(self, output_encodeing, input_encodeing='utf-8'):
+    def __init__(self, output_encodeing, filename=None, input_encodeing='utf-8'):
         self.pos = 0
+        self.filename = filename
         self.width, self.height = get_terminal_size()
         self.output_encodeing = output_encodeing
         self.input_encoding = input_encodeing
 
     def __enter__(self):
-        stream = codecs.getreader(self.input_encoding)(sys.stdin)
+        if self.filename:
+            stream = codecs.getreader(self.input_encoding)(open(self.filename, 'r'), 'replace')
+        else:
+            stream = codecs.getreader(self.input_encoding)(sys.stdin)
         self.lines = map(str, stream)
         self.max_lines_range = len(self.lines)
         ttyname = get_ttyname()
@@ -55,16 +59,19 @@ class SIG(object):
             sys.stdout.write('\x1b[?0h\x1b[0J')
 
     def render(self):
-        # hide cursor
-        sys.stdout.write('\x1b[?25l')
+        reset = '\x1b[0K\x1b[0m'
+        sys.stdout.write('\x1b[?25l')  # hide cursor
         for idx, line in enumerate(self.lines):
             line.encode(self.output_encodeing)
             sys.stdout.write('\x1b[0K')
             if idx == self.pos:
-                sys.stdout.write(term(line, 'yellow', 'purple', 'bold') + '\r')
+                sys.stdout.write(term(line,
+                                      'yellow',
+                                      'purple',
+                                      'bold') + reset + '\r')
             else:
-                sys.stdout.write(line + '\x1b[0K' + '\r')
-        sys.stdout.write('\x1b[{value}A'.format(value=self.max_lines_range))
+                sys.stdout.write(line + reset + '\r')
+        sys.stdout.write('\x1b[{}A'.format(self.max_lines_range))
 
 
 def get_ttyname():

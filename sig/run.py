@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import locale
 import argparse
@@ -8,7 +9,7 @@ import textwrap
 from ansi import term
 from core import SIG
 
-LOGAPPNAME = 'WorkFlow Shell Interface'
+LOGAPPNAME = 'Selection Display Interface'
 
 
 def get_locale():
@@ -33,7 +34,23 @@ def get_argparser():
                         action='version',
                         version='{version}'.format(version=__version__))
 
-    parser.add_argument('command',
+    parser.add_argument('filename',
+                        nargs='?',
+                        type=str)
+
+    parser.add_argument('-s', '--search',
+                        nargs='?',
+                        type=str)
+
+    parser.add_argument('-e', '--execute',
+                        nargs='?',
+                        type=str)
+
+    parser.add_argument('-c', '--into_clipboald',
+                        nargs='?',
+                        type=str)
+
+    parser.add_argument('-r', '--regex',
                         nargs='?',
                         type=str)
 
@@ -43,9 +60,10 @@ def get_argparser():
 def main():
     parser = get_argparser()
     args = parser.parse_args()
-    if not sys.stdin.isatty():
-        encoding = get_locale()
-        with SIG(encoding) as sig:
-            sig.loop()
-    elif args.command is None:
-        parser.print_help()
+    if args.filename and not os.access(args.filename, os.R_OK):
+        sys.exit('Not read a file')
+#     if sys.stdin.isatty():
+#         sys.exit('Not a tty file')
+    encoding = get_locale()
+    with SIG(encoding, filename=args.filename) as sig:
+        sig.loop()
