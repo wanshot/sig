@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 import os
 import sys
 import termios
 import tty
 import codecs
-from ansi import term
-from terminalsize import get_terminal_size
+
+from .ansi import term
+from .terminalsize import get_terminal_size
 
 
 class SIG(object):
@@ -20,13 +22,13 @@ class SIG(object):
 
     def __enter__(self):
         if self.filename:
-            stream = codecs.getreader(self.input_encoding)(open(self.filename, 'r'), 'replace')
+            stream = codecs.getreader(self.input_encoding)(open(self.filename, 'rb'), 'replace')
         else:
-            stream = codecs.getreader(self.input_encoding)(sys.stdin)
-        self.lines = map(str, stream)
+            stream = codecs.getreader(self.input_encoding)(sys.stdin.buffer)
+        self.lines = stream.readlines()
         self.max_lines_range = len(self.lines)
         ttyname = get_ttyname()
-        sys.stdin = file(ttyname)
+        sys.stdin = open(ttyname)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):

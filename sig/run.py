@@ -6,8 +6,8 @@ import locale
 import argparse
 import textwrap
 
-from ansi import term
-from core import SIG
+from .ansi import term
+from .core import SIG
 
 LOGAPPNAME = 'Selection Display Interface'
 
@@ -38,21 +38,30 @@ def get_argparser():
                         nargs='?',
                         type=str)
 
-    parser.add_argument('-s', '--search',
-                        nargs='?',
-                        type=str)
-
     parser.add_argument('-e', '--execute',
-                        nargs='?',
-                        type=str)
+                        action='store_true',
+                        default=False,
+                        help='')
 
     parser.add_argument('-c', '--into_clipboald',
+                        action='store_true',
+                        default=False,
+                        help='copy to clipboald')
+
+    parser.add_argument('-q', '--query',
                         nargs='?',
-                        type=str)
+                        type=str,
+                        help='search character')
 
     parser.add_argument('-r', '--regex',
                         nargs='?',
-                        type=str)
+                        type=str,
+                        help='regex')
+
+    parser.add_argument('-s', '--allow_script',
+                        nargs='?',
+                        type=str,
+                        help='')
 
     return parser
 

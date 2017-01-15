@@ -46,8 +46,8 @@ def term(message, fg_color=None, bg_color=None, style=None):
 
     highlight = ';'.join(map(str, [style, fg_color, bg_color]))
 
-    return '\x1b[{attribute}m{char}\x1b[0m'.format(attribute=highlight,
-                                                   char=message)
+    return u'\x1b[{attribute}m{char}\x1b[0m'.format(attribute=highlight,
+                                                    char=message)
 
 if __name__ == '__main__':
     for s, _ in sorted(STYLE.items(), key=lambda x: x[1]):
@@ -55,4 +55,4 @@ if __name__ == '__main__':
             tmp = []
             for bc, _ in sorted(BACKGROUND_COLORS.items(), key=lambda x: x[1]):
                 tmp.append(term('test', fg_color=fc, bg_color=bc, style=s))
-            print ' '.join(tmp)
+            print(' '.join(tmp))
