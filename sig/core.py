@@ -35,8 +35,7 @@ class SIG(object):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        sys.stdout.write('\x1b[?25h')
-        sys.stdout.write('\x1b[0J')
+        sys.stdout.write('\x1b[?25h\x1b[0J')
         if self.args_for_action:
             self.execute_command()
 
@@ -83,10 +82,14 @@ class SIG(object):
         p = subprocess.Popen(
             self.args_for_action,
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             shell=True,
         )
         (output, err) = p.communicate()
-        sys.stdout.write(output.decode(self.output_encodeing))
+        if err:
+            sys.stdout.write(err.decode(self.output_encodeing))
+        else:
+            sys.stdout.write(output.decode(self.output_encodeing))
 
 
 def get_ttyname():

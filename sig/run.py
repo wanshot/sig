@@ -73,8 +73,8 @@ def main():
     if args.filename and not os.access(args.filename, os.R_OK):
         sys.exit('Not read a file')
 
-    if args.filename is None and sys.stdin.isatty():
-        sys.exit('Not a tty file')
+#     if not (args.filename is None and sys.stdin.isatty()):
+#         sys.exit('Not a tty file')
 
     encoding = get_locale()
     file_name = None
