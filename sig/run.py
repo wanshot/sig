@@ -69,10 +69,17 @@ def get_argparser():
 def main():
     parser = get_argparser()
     args = parser.parse_args()
+
     if args.filename and not os.access(args.filename, os.R_OK):
         sys.exit('Not read a file')
-#     if sys.stdin.isatty():
-#         sys.exit('Not a tty file')
+
+    if args.filename is None and sys.stdin.isatty():
+        sys.exit('Not a tty file')
+
     encoding = get_locale()
-    with SIG(encoding, filename=args.filename) as sig:
-        sig.loop()
+    file_name = None
+    if args.filename:
+        file_name = args.filename
+    with SIG(encoding, file_name) as sig:
+        exit_code = sig.loop()
+    sys.exit(exit_code)

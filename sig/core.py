@@ -1,24 +1,27 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 import sys
 import termios
 import tty
 import codecs
+import subprocess
 
 from .ansi import term
 from .terminalsize import get_terminal_size
 
+ESC = '\x1b'
+FINISH_KEYS = ['q', ESC]
+
 
 class SIG(object):
 
-    def __init__(self, output_encodeing, filename=None, input_encodeing='utf-8'):
+    def __init__(self, output_encodeing, filename, input_encodeing='utf-8'):
         self.pos = 0
         self.filename = filename
         self.width, self.height = get_terminal_size()
         self.output_encodeing = output_encodeing
         self.input_encoding = input_encodeing
+        self.args_for_action = None
 
     def __enter__(self):
         if self.filename:
@@ -33,32 +36,33 @@ class SIG(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         sys.stdout.write('\x1b[?25h')
+        sys.stdout.write('\x1b[0J')
+        if self.args_for_action:
+            self.execute_command()
 
     def loop(self):
         self.render()
-        try:
-            while True:
-
+        while True:
+            try:
                 ch = get_char()
-                if ch == 'q':
-                    sys.exit(1)
-                # Enter
-                elif ch == '\r':
-                    sys.exit(1)
-                # CURSOR KEY
-                elif ch == '\x1b':
-                    sys.exit(1)
+
+                if ch in FINISH_KEYS:
+                    break
                 elif ch == 'k':
                     if self.pos > 0:
                         self.pos -= 1
                 elif ch == 'j':
                     if self.pos < self.max_lines_range - 1:
                         self.pos += 1
+                elif ch == '\n':
+                    self.args_for_action = self.lines[self.pos]
+                    break
 
-                if ch:
-                    self.render()
-        except:
-            sys.stdout.write('\x1b[?0h\x1b[0J')
+                self.render()
+            except:
+                sys.stdout.write('\x1b[?0h\x1b[0J')
+
+        return 1
 
     def render(self):
         reset = '\x1b[0K\x1b[0m'
@@ -75,6 +79,15 @@ class SIG(object):
                 sys.stdout.write(line + reset + '\r')
         sys.stdout.write('\x1b[{}A'.format(self.max_lines_range))
 
+    def execute_command(self):
+        p = subprocess.Popen(
+            self.args_for_action,
+            stdout=subprocess.PIPE,
+            shell=True,
+        )
+        (output, err) = p.communicate()
+        sys.stdout.write(output.decode(self.output_encodeing))
+
 
 def get_ttyname():
     for file_obj in (sys.stdin, sys.stdout, sys.stderr):
@@ -90,7 +103,8 @@ def get_char():
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd)
         try:
-            tty.setraw(fd)
-            return sys.stdin.read(1)
+            tty.setcbreak(fd)
+            ch = sys.stdin.read(1)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        return ch
